@@ -1,26 +1,7 @@
 const StoryModel = require("../Models/StoryModel.js");
+const UserModel = require("../Models/UserModel.js");
 
 const createStory = async (req, res) => {
-  // const storySlide = new StoryModel({
-  //   category,
-  //   imageurl,
-  //   description,
-  //   heading,
-  //   likes: userId,
-  // });
-
-  // const story = [storySlide, storySlide, storySlide];
-  //   // Define a schema for the forms
-  // const FormSchema = new mongoose.Schema({
-  //   name: String,
-  //   email: String,
-  //   message: String
-  // });
-
-  // const Form = mongoose.model('Form', FormSchema);
-
-  // // Handle POST request
-  // app.post("/forms", async (req, res) => {
   try {
     const forms = req.body.forms;
 
@@ -28,30 +9,12 @@ const createStory = async (req, res) => {
       res.status(400).json({ message: "No forms found" });
       return;
     }
-
-    // for (const story of forms) {
-    //   const newStory = new StoryModel(story);
-    //   const result = await newStory.save();
-    // }
     const result = await StoryModel.create(forms);
-    // console.log(result);
-
     res.status(200).json({ message: "Forms saved successfully" });
   } catch (error) {
     console.error("Error saving forms:", error);
     res.status(500).json({ error: "An error occurred" });
   }
-
-  // try {
-  //   const newStory = new StoryModel({
-  //     userId: req.params.id,
-  //     story,
-  //   });
-  //   const result = await newStory.save();
-  //   res.status(200).json({ message: "Stories Created", res: result });
-  // } catch (error) {
-  //   res.status(500).json(error);
-  // }
 };
 
 // Get all Story
@@ -93,6 +56,23 @@ const getSingleStory = async (req, res) => {
   }
 };
 
+const addToBookmark = async (req, res) => {
+  const storyData = req.body.storyData;
+  const userId = req.params.userId;
+
+  try {
+    const user = await UserModel.findById(userId);
+    console.log(user);
+    await user.updateOne({ $push: { bookmarksStories: storyData } });
+
+    res.status(200).json({
+      status: "Saved to Bookmarks",
+      bookMarkedStories: user.bookmarksStories,
+    });
+  } catch (error) {
+    res.status(500).json(error);
+  }
+};
 // Update a story
 const updateStory = async (req, res) => {
   const storyId = req.params.id;
@@ -100,7 +80,7 @@ const updateStory = async (req, res) => {
 
   try {
     const story = await StoryModel.findById(storyId);
-    console.log(story);
+
     if (story.userId === userId) {
       await story.updateOne({ $set: req.body });
       res.status(200).json("Post Updated");
@@ -111,24 +91,6 @@ const updateStory = async (req, res) => {
     res.status(500).json(error);
   }
 };
-
-// // Delete a story
-//  const deletePost = async (req, res) => {
-//   const id = req.params.id;
-//   const { userId } = req.body;
-
-//   try {
-//     const story = await StoryModel.findById(id);
-//     if (story.userId === userId) {
-//       await story.deleteOne();
-//       res.status(200).json("POst deleted successfully");
-//     } else {
-//       res.status(403).json("Action forbidden");
-//     }
-//   } catch (error) {
-//     res.status(500).json(error);
-//   }
-// };
 
 // like/dislike a story
 const likeStory = async (req, res) => {
@@ -170,4 +132,5 @@ module.exports = {
   getFilteredStories,
   likeStory,
   getCurrentUserStories,
+  addToBookmark,
 };
